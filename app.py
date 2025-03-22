@@ -1,11 +1,11 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 import joblib
 import numpy as np
 from inference_sdk import InferenceHTTPClient
+from pydantic import BaseModel
+from typing import Optional
 
-
-# Initialize Flask app
-app = Flask(__name__)
+app = FastAPI()
 
 # Load the trained model and scalers
 model = joblib.load("mobile_model.pkl")
@@ -21,7 +21,19 @@ client = InferenceHTTPClient(
     api_key="ugoLHHO11vI5X3Z4MvDI"
 )
 
-def get_condition_from_roboflow(image_path):
+class PredictionInput(BaseModel):
+    os: str
+    screen_size: float
+    five_g: str
+    internal_memory: int
+    ram: int
+    battery: int
+    release_year: int
+    days_used: int
+    normalized_new_price: float
+    device_brand: str
+
+def get_condition_from_roboflow(image_path: str):
     result = client.run_workflow(
         workspace_name="rough-gxilk",
         workflow_id="custom-workflow-2",
@@ -31,8 +43,7 @@ def get_condition_from_roboflow(image_path):
     condition = result[0]['predictions']['predictions'][0]['class']
     return condition.capitalize()
 
-def predict_price_all_features(os, screen_size, five_g, internal_memory, ram, battery, release_year, days_used, normalized_new_price, device_brand, image_path):
-    
+def predict_price_all_features(os: str, screen_size: float, five_g: str, internal_memory: int, ram: int, battery: int, release_year: int, days_used: int, normalized_new_price: float, device_brand: str, image_path: str):
     brand_average = brand_averages.get(device_brand)
 
     def group_brand_pred(value):
@@ -79,25 +90,40 @@ def predict_price_all_features(os, screen_size, five_g, internal_memory, ram, ba
 
     return initial_price*1000, condition, final_price*1000
 
-@app.route('/predict', methods=['POST'])
-def predict():
+@app.post('/predict')
+async def predict(
+    os: str = Form(...),
+    screen_size: float = Form(...),
+    five_g: str = Form(...),
+    internal_memory: int = Form(...),
+    ram: int = Form(...),
+    battery: int = Form(...),
+    release_year: int = Form(...),
+    days_used: int = Form(...),
+    normalized_new_price: float = Form(...),
+    device_brand: str = Form(...),
+    file: UploadFile = File(...)
+):
     try:
-        data = request.json
-        image_path = data.get("image_path")
-        
+        # Save the uploaded file temporarily
+        image_path = f"temp_{file.filename}"
+        with open(image_path, "wb") as buffer:
+            buffer.write(await file.read())
+
+        # Predict the price
         initial_price, condition, final_price = predict_price_all_features(
-            data["os"], data["screen_size"], data["five_g"],
-            data["internal_memory"], data["ram"], data["battery"],
-            data["release_year"], data["days_used"], data["normalized_new_price"], data["device_brand"], image_path
+            os, screen_size, five_g, internal_memory, ram, battery,
+            release_year, days_used, normalized_new_price, device_brand, image_path
         )
         
-        return jsonify({
+        return {
             "Condition": condition,
             "Predicted Price": round(initial_price, 2),
             "Final Adjusted Price": round(final_price, 2)
-        })
+        }
     except Exception as e:
-        return jsonify({"error": str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
