@@ -28,7 +28,7 @@ client = InferenceHTTPClient(
 
 # Google Drive API setup
 SCOPES = ['https://www.googleapis.com/auth/drive']
-CREDENTIALS_FILE = 'cd.json'  # Path to your Google Drive API credentials
+CREDENTIALS_FILE = ""  # Path to your Google Drive API credentials
 
 def authenticate_google_drive():
     """Authenticate and return Google Drive service."""
