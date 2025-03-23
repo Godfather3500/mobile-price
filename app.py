@@ -20,10 +20,12 @@ label_encoder_os = joblib.load("label_encoder_os.pkl")
 label_encoder_5g = joblib.load("label_encoder_5g.pkl")
 brand_averages = joblib.load("brand_averages.pkl")
 
+ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
+
 # Initialize Roboflow Client
 client = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
-    api_key="ugoLHHO11vI5X3Z4MvDI"
+    api_key=ROBOFLOW_API_KEY
 )
 
 # Function to get condition from Roboflow
