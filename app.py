@@ -122,7 +122,7 @@ def predict():
         )
 
         # Clean up: Remove the temporary image
-        os.remove(image_path)
+       # os.remove(image_path)
 
         # Return response
         return jsonify({
