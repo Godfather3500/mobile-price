@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify
 import joblib
-import os
-import tempfile
 import numpy as np
 from inference_sdk import InferenceHTTPClient
+import os
 from werkzeug.utils import secure_filename
+import tempfile
 
 app = Flask(__name__)
 
@@ -19,28 +19,26 @@ brand_averages = joblib.load("brand_averages.pkl")
 # Initialize Roboflow Client
 client = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
-    api_key=os.getenv("ROBOFLOW_API_KEY")
+    api_key="ugoLHHO11vI5X3Z4MvDI"
 )
 
-# Function to send the image to Roboflow API
+# Function to get condition from Roboflow API
 def get_condition_from_roboflow(image_path):
-    """ Send image to Roboflow and get condition """
-    with open(image_path, "rb") as img_file:   # Open in binary mode
-        result = client.run_workflow(
-            workspace_name="rough-gxilk",
-            workflow_id="custom-workflow-2",
-            images={"image": img_file},         # Send file object
-            use_cache=True
-        )
+    """Send image to Roboflow and get condition."""
+    result = client.run_workflow(
+        workspace_name="rough-gxilk",
+        workflow_id="custom-workflow-2",
+        images={"image": image_path},  # Send the temporary file path
+        use_cache=True
+    )
 
-    # Extract condition from predictions
+    # Extract condition
     condition = result[0]['predictions']['predictions'][0]['class']
     return condition.capitalize()
 
-# Function to predict price and condition
+# Prediction function
 def predict_price_all_features(os, screen_size, five_g, internal_memory, ram, battery, release_year, days_used, normalized_new_price, device_brand, image_path):
-    """ Predict mobile price and condition """
-    
+    """Predict price and condition from image."""
     brand_average = brand_averages.get(device_brand)
 
     def group_brand_pred(value):
@@ -73,51 +71,60 @@ def predict_price_all_features(os, screen_size, five_g, internal_memory, ram, ba
         brand_group
     ]])
 
-    # Scale input features
     scaled_input = feature_scaler.transform(input_data)
     prediction_scaled = model.predict(scaled_input)
     prediction = scaler.inverse_transform(prediction_scaled.reshape(-1, 1))
     initial_price = prediction[0][0]
 
-    # Get condition from Roboflow
+    # Get condition from Roboflow API
     condition = get_condition_from_roboflow(image_path)
 
-    # Apply price adjustment
+    # Apply decision-making logic to adjust final price
     price_adjustment = {"Good": 1.0, "Fair": 0.85, "Worst": 0.6}
-    final_price = initial_price * price_adjustment.get(condition, 1.0)
+    final_price = initial_price * price_adjustment.get(condition)
 
     return initial_price * 1000, condition, final_price * 1000
 
+# Route to handle prediction
 @app.route('/predict', methods=['POST'])
 def predict():
-    """ Flask route to handle predictions """
     try:
-        # Handle file upload
-        if 'image' not in request.files:
-            return jsonify({"error": "No image part"}), 400
+        # Read form data
+        os = request.form.get("os")
+        screen_size = float(request.form.get("screen_size"))
+        five_g = request.form.get("five_g")
+        internal_memory = int(request.form.get("internal_memory"))
+        ram = int(request.form.get("ram"))
+        battery = int(request.form.get("battery"))
+        release_year = int(request.form.get("release_year"))
+        days_used = int(request.form.get("days_used"))
+        normalized_new_price = float(request.form.get("normalized_new_price"))
+        device_brand = request.form.get("device_brand")
 
-        image = request.files['image']
+        # Handle image upload
+        if "image" not in request.files:
+            return jsonify({"error": "No image uploaded"}), 400
 
-        if image.filename == '':
-            return jsonify({"error": "No selected file"}), 400
+        image = request.files["image"]
+
+        if image.filename == "":
+            return jsonify({"error": "No image selected"}), 400
 
         # Save image temporarily
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            image_path = temp_file.name
-            image.save(image_path)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
+            image.save(tmp_file.name)
+            image_path = tmp_file.name
 
-        # Extract other form data
-        data = request.form
+        # Make prediction
         initial_price, condition, final_price = predict_price_all_features(
-            data["os"], float(data["screen_size"]), data["five_g"],
-            float(data["internal_memory"]), float(data["ram"]), float(data["battery"]),
-            int(data["release_year"]), int(data["days_used"]),
-            float(data["normalized_new_price"]), data["device_brand"], image_path
+            os, screen_size, five_g, internal_memory, ram, battery,
+            release_year, days_used, normalized_new_price, device_brand, image_path
         )
 
-        # Remove the temp image after processing
+        # Clean up: Remove the temporary image
         os.remove(image_path)
 
+        # Return response
         return jsonify({
             "Condition": condition,
             "Predicted Price": round(initial_price, 2),
@@ -127,5 +134,6 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)})
 
+# Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
