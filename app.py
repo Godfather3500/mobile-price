@@ -23,7 +23,7 @@ brand_averages = joblib.load("brand_averages.pkl")
 # Initialize Roboflow Client
 client = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
-    api_key="ugoLHHO11vI5X3Z4MvDI"
+    api_key=""
 )
 
 # Function to get condition from Roboflow
