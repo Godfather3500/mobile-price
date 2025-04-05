@@ -34,8 +34,6 @@ def get_condition_from_roboflow(image_path):
     use_cache=True # cache workflow definition for 15 minutes
 )
 
-    )
-
     # Extract condition
     condition = result[0]['predictions']['predictions'][0]['class']
     return condition.capitalize()
