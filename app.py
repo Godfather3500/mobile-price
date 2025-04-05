@@ -26,10 +26,14 @@ client = InferenceHTTPClient(
 def get_condition_from_roboflow(image_path):
     """Send image to Roboflow and get condition."""
     result = client.run_workflow(
-        workspace_name="james-fxm8u",
-        workflow_id="custom-workflow",
-        images={"image": image_path},  # Send the temporary file path
-        use_cache=True
+    workspace_name="james-fxm8u",
+    workflow_id="custom-workflow",
+    images={
+        "image": image_path
+    },
+    use_cache=True # cache workflow definition for 15 minutes
+)
+
     )
 
     # Extract condition
