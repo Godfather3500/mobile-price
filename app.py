@@ -25,7 +25,7 @@ client = InferenceHTTPClient(
 # Function to get condition from Roboflow API
 def get_condition_from_roboflow(image_path):
     """Send image to Roboflow and get predicted condition label."""
-        result = client.run_workflow(
+    result = client.run_workflow(
             workspace_name="james-fxm8u",
             workflow_id="custom-workflow",
             images={
@@ -34,12 +34,12 @@ def get_condition_from_roboflow(image_path):
             use_cache=True  # Cache workflow definition for 15 minutes
         )
 
-        print("📸 Roboflow response:", result)  # Optional: for debugging
+    print("📸 Roboflow response:", result)  # Optional: for debugging
 
         # Extract the predicted class label
-        predicted_classes = result[0]['predictions'].get('predicted_classes', [])
-        condition = predicted_classes[0]
-        return condition.capitalize()
+    predicted_classes = result[0]['predictions'].get('predicted_classes', [])
+    condition = predicted_classes[0]
+    return condition.capitalize()
 
 
 # Prediction function
