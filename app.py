@@ -19,14 +19,14 @@ brand_averages = joblib.load("brand_averages.pkl")
 # Initialize Roboflow Client
 client = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
-    api_key="ByjgvrLGztXccgeEdJpg"
+    api_key="KKuCYpsib9sFBf5SKENX"
 )
 
 # Function to get condition from Roboflow API
 def get_condition_from_roboflow(image_path):
     """Send image to Roboflow and get predicted condition label."""
     result = client.run_workflow(
-            workspace_name="james-fxm8u",
+            workspace_name="batman-4caqy",
             workflow_id="custom-workflow",
             images={
                 "image": image_path
