@@ -5,8 +5,10 @@ from inference_sdk import InferenceHTTPClient
 import os
 from werkzeug.utils import secure_filename
 import tempfile
+from flask_cors import CORS 
 
 app = Flask(__name__)
+CORS(app)
 
 # Load the trained model and scalers
 model = joblib.load("mobile_model.pkl")
