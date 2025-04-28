@@ -89,7 +89,7 @@ def predict_price_all_features(os, screen_size, five_g, internal_memory, ram, ba
 
     # Apply decision-making logic to adjust final price
     price_adjustment = {"Good": 1.0, "Fair": 0.85, "Worst": 0.6}
-    initial_price += 5500
+    initial_price += 5500.00
     final_price = initial_price * price_adjustment.get(condition)
 
     return initial_price * 1000, condition, final_price * 1000
