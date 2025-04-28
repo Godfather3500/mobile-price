@@ -82,13 +82,14 @@ def predict_price_all_features(os, screen_size, five_g, internal_memory, ram, ba
     scaled_input = feature_scaler.transform(input_data)
     prediction_scaled = model.predict(scaled_input)
     prediction = scaler.inverse_transform(prediction_scaled.reshape(-1, 1))
-    initial_price = prediction[0][0]+5500
+    initial_price = prediction[0][0]
 
     # Get condition from Roboflow API
     condition = get_condition_from_roboflow(image_path)
 
     # Apply decision-making logic to adjust final price
     price_adjustment = {"Good": 1.0, "Fair": 0.85, "Worst": 0.6}
+    initial_price += 5500
     final_price = initial_price * price_adjustment.get(condition)
 
     return initial_price * 1000, condition, final_price * 1000
