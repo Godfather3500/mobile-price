@@ -84,8 +84,6 @@ def predict_price_all_features(os, screen_size, five_g, internal_memory, ram, ba
     prediction = scaler.inverse_transform(prediction_scaled.reshape(-1, 1))
     initial_price = prediction[0][0]
 
-    initial_price += 5.5
-
     # Get condition from Roboflow API
     condition = get_condition_from_roboflow(image_path)
 
